@@ -1,0 +1,99 @@
+-- PostgreSQL Schema for Core Tables
+
+CREATE TABLE sources (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE entities (
+    id SERIAL PRIMARY KEY,
+    source_id INT REFERENCES sources(id),
+    name VARCHAR(255) NOT NULL,
+    attributes JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE relationships (
+    id SERIAL PRIMARY KEY,
+    entity1_id INT REFERENCES entities(id),
+    entity2_id INT REFERENCES entities(id),
+    relationship_type VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    action VARCHAR(255) NOT NULL,
+    table_name VARCHAR(255) NOT NULL,
+    record_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE compliance (
+    id SERIAL PRIMARY KEY,
+    entity_id INT REFERENCES entities(id),
+    status VARCHAR(255) NOT NULL,
+    compliant BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Additional Core Tables
+
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    product_id INT REFERENCES products(id),
+    transaction_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    amount DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE payments (
+    id SERIAL PRIMARY KEY,
+    transaction_id INT REFERENCES transactions(id),
+    payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    payment_method VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Ensure Referential Integrity
+ALTER TABLE entities ADD CONSTRAINT fk_source FOREIGN KEY (source_id) REFERENCES sources(id);
+ALTER TABLE relationships ADD CONSTRAINT fk_entity1 FOREIGN KEY (entity1_id) REFERENCES entities(id);
+ALTER TABLE relationships ADD CONSTRAINT fk_entity2 FOREIGN KEY (entity2_id) REFERENCES entities(id);
+ALTER TABLE audit_logs ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE compliance ADD CONSTRAINT fk_entity FOREIGN KEY (entity_id) REFERENCES entities(id);
