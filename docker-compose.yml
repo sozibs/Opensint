@@ -1,0 +1,40 @@
+version: '3.8'  
+services:  
+  postgres:  
+    image: postgres:13  
+    environment:  
+      POSTGRES_DB: mydatabase  
+      POSTGRES_USER: myuser  
+      POSTGRES_PASSWORD: mypassword  
+    networks:  
+      - mynetwork  
+    volumes:  
+      - postgres_data:/var/lib/postgresql/data  
+  neo4j:  
+    image: neo4j:4.3  
+    environment:  
+      NEO4J_AUTH: neo4j/mypassword  
+    networks:  
+      - mynetwork  
+    volumes:  
+      - neo4j_data:/data  
+  redis:  
+    image: redis:6.2  
+    networks:  
+      - mynetwork  
+  fastapi:  
+    image: fastapi:latest  
+    build: ./app  
+    environment:  
+      DATABASE_URL: postgres://myuser:mypassword@postgres/mydatabase  
+      REDIS_URL: redis://redis:6379  
+    ports:  
+      - "8000:8000"  
+    networks:  
+      - mynetwork  
+networks:  
+  mynetwork:  
+    driver: bridge  
+volumes:  
+  postgres_data:  
+  neo4j_data:  
